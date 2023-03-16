@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Project;
+use App\Models\Type;
 use Illuminate\Http\Request;
 
 class ProjectController extends Controller
@@ -34,7 +35,11 @@ class ProjectController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $project = Project::with('type','technologies')->find($id);
+        if(!$project) return response(null, 404);
+
+        return response()->json($project);
+        
     }
 
     /**
@@ -51,5 +56,20 @@ class ProjectController extends Controller
     public function destroy(string $id)
     {
         //
+    }
+
+    public function typeProjectsIndex(string $id)
+    {
+        $type = Type::find($id);
+        if(!$type) return response(null, 404);
+
+        // $projects = $type->projects->with('type','technologies');
+        $projects = Project::where('type_id', $type->id)->with('type','technologies')->paginate(5);
+
+        foreach ($projects as $project) {
+            if($project->image) $project->image = url('storage/'. $project->image);
+        }
+        return response()->json(compact('projects','type'));
+
     }
 }
